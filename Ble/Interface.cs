@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Windows.Devices.Bluetooth;
 using Windows.Devices.Bluetooth.GenericAttributeProfile;
+using Windows.Foundation;
 using Windows.Security.Cryptography;
 
 namespace BleConnector.Ble {
@@ -33,7 +34,7 @@ namespace BleConnector.Ble {
         /// <param name="char_uuid"></param>
         /// <param name="listener"></param>
         /// <returns></returns>
-        public static async Task<bool> Subscribe(string char_uuid, Windows.Foundation.TypedEventHandler<GattCharacteristic, GattValueChangedEventArgs> listener) {
+        public static async Task<bool> Subscribe(string char_uuid, TypedEventHandler<GattCharacteristic, GattValueChangedEventArgs> listener) {
             if (!CheckConnection()) {
                 Console.WriteLine("Device not connected");
                 return false;
@@ -43,17 +44,19 @@ namespace BleConnector.Ble {
             if (gc == null) {
                 return false;
             }
-            if (!gc.CharacteristicProperties.HasFlag(GattCharacteristicProperties.Notify)) {
-                Console.WriteLine("This characteristic does not support notify operation.");
+
+            if (!gc.CharacteristicProperties.HasFlag(GattCharacteristicProperties.Indicate)) {
+                Console.WriteLine("This characteristic does not support notify/Indicate operation.");
                 return false;
             }
 
             GattCommunicationStatus status = await gc.WriteClientCharacteristicConfigurationDescriptorAsync(
-                        GattClientCharacteristicConfigurationDescriptorValue.Notify);
+                        GattClientCharacteristicConfigurationDescriptorValue.Indicate);
+
+            Console.WriteLine(status.ToString()); // TODO: Remove
 
             if (status == GattCommunicationStatus.Success) {
                 gc.ValueChanged += listener;
-                //Console.WriteLine("Subscribe successful");
                 return true;
             }
 
@@ -66,7 +69,7 @@ namespace BleConnector.Ble {
         /// <param name="char_uuid"></param>
         /// <param name="listener"></param>
         /// <returns></returns>
-        public static bool Unsubscribe(string char_uuid, Windows.Foundation.TypedEventHandler<GattCharacteristic, GattValueChangedEventArgs> listener) {
+        public static bool Unsubscribe(string char_uuid, TypedEventHandler<GattCharacteristic, GattValueChangedEventArgs> listener) {
             if (!CheckConnection()) {
                 Console.WriteLine("Device not connected");
                 return false;
@@ -76,8 +79,9 @@ namespace BleConnector.Ble {
             if (gc == null) {
                 return false;
             }
-            if (!gc.CharacteristicProperties.HasFlag(GattCharacteristicProperties.Notify)) {
-                Console.WriteLine("This characteristic does not support notify operation.");
+
+            if (!gc.CharacteristicProperties.HasFlag(GattCharacteristicProperties.Indicate)) {
+                Console.WriteLine("This characteristic does not support indicate operation.");
                 return false;
             }
 

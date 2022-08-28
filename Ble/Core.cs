@@ -15,12 +15,12 @@ namespace BleConnector.Ble {
 
         // Scans the environment for device with given mac address
         public static void Scan(string macAddress) {
-            TargetMacAddress = macAddress;
+            TargetMacAddress = macAddress.ToLower();
 
             StartWatcher();
 
-            // Stop watcher after 5 seconds
-            Thread.Sleep(5000);
+            // Stop watcher after 10 seconds
+            Thread.Sleep(10000);
             BleWatcher.Stopped -= OnScanError;
             BleWatcher.Stop();
             BleWatcher.Received -= OnScanResults;
@@ -43,10 +43,13 @@ namespace BleConnector.Ble {
             // convert device address(long) to mac address format
             var macAddress = Regex.Replace(device.BluetoothAddress.ToString("X"), "(.{2})(.{2})(.{2})(.{2})(.{2})(.{2})", "$1:$2:$3:$4:$5:$6");
 
+            Console.WriteLine($"Found {macAddress}"); // TODO: Remove
+
             // check if target device is found
-            if (!macAddress.Equals(TargetMacAddress)) { return; }
+            if (!macAddress.ToLower().Equals(TargetMacAddress)) { return; }
 
             // Stop the watcher and save the target device
+            BleWatcher.Stopped -= OnScanError;
             BleWatcher.Stop();
             Interface.SetDevice(device);
         }
