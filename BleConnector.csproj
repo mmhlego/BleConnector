@@ -116,6 +116,11 @@
     <RestoreProjectStyle>PackageReference</RestoreProjectStyle>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Models\Glucometer.cs" />
+    <Compile Include="Models\Oximeter.cs" />
+    <Compile Include="Models\Range.cs" />
+    <Compile Include="Models\Thermometer.cs" />
+    <Compile Include="Models\Timestamp.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
