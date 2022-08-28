@@ -117,6 +117,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Ble\Core.cs" />
+    <Compile Include="Ble\Interface.cs" />
     <Compile Include="Models\DeviceTypes.cs" />
     <Compile Include="Models\GlucometerMeasurement.cs" />
     <Compile Include="Models\OximeterMeasurement.cs" />

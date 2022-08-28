@@ -12,12 +12,10 @@ namespace BleConnector.Ble {
         };
 
         static string TargetMacAddress = "";
-        public static BluetoothLEDevice TargetDevice = null;
 
         // Scans the environment for device with given mac address
         public static void Scan(string macAddress) {
             TargetMacAddress = macAddress;
-            TargetDevice = null;
 
             StartWatcher();
 
@@ -50,7 +48,7 @@ namespace BleConnector.Ble {
 
             // Stop the watcher and save the target device
             BleWatcher.Stop();
-            TargetDevice = device;
+            Interface.SetDevice(device);
         }
 
         // Gets called when an error occurs in scan process
