@@ -3,7 +3,8 @@ using Windows.Devices.Bluetooth;
 
 namespace BleConnector.Models {
     static class Logger {
-        static bool IsDev = true;
+        // When exporting, by changing this value to false all other logs will be invisible
+        static readonly bool IsDev = true;
 
         public static void Log(string message) {
             if (IsDev) {
@@ -19,8 +20,13 @@ namespace BleConnector.Models {
             Console.Write(error.ToString());
         }
     }
+
+    /// <summary>
+    /// List of possible errors inside program
+    /// </summary>
     enum ErrorCodes {
         // Bluetooth internal errors
+        // https://docs.microsoft.com/en-us/uwp/api/windows.devices.bluetooth.bluetootherror?view=winrt-22621
         ConsentRequired,        // 
         DeviceNotConnected,     // Run again
         DisabledByPolicy,       // 
@@ -33,7 +39,6 @@ namespace BleConnector.Models {
         TransportNotSupported,  // 
 
         DeviceNotFound,         // Please turn on the peripheral
-        ScanFailed,             //
         PairingRequired,        // Open the pair app
         InvalidCommand,
         InvalidMacAddress,
