@@ -1,4 +1,5 @@
 ﻿
+using BleConnector.Models;
 using System;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -43,7 +44,7 @@ namespace BleConnector.Ble {
             // convert device address(long) to mac address format
             var macAddress = Regex.Replace(device.BluetoothAddress.ToString("X"), "(.{2})(.{2})(.{2})(.{2})(.{2})(.{2})", "$1:$2:$3:$4:$5:$6");
 
-            Console.WriteLine($"Found {macAddress}"); // TODO: Remove
+            Logger.Log($"Found {macAddress}");
 
             // check if target device is found
             if (!macAddress.ToLower().Equals(TargetMacAddress)) { return; }
@@ -57,13 +58,7 @@ namespace BleConnector.Ble {
         // Gets called when an error occurs in scan process
         static void OnScanError(BluetoothLEAdvertisementWatcher s, BluetoothLEAdvertisementWatcherStoppedEventArgs e) {
             BleWatcher.Stop();
-            Console.WriteLine("======================================================");
-            Console.WriteLine("Scan failed:");
-            Console.WriteLine($"\tScanning mode: {s.ScanningMode}");
-            Console.WriteLine($"\tStatus: {s.Status}");
-            Console.WriteLine($"\tError: {e.Error}");
-            Console.WriteLine("======================================================");
-            Console.WriteLine();
+            Logger.Error(e.Error);
         }
     }
 }

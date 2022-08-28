@@ -1,4 +1,5 @@
-﻿using System;
+﻿using BleConnector.Models;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
@@ -36,7 +37,8 @@ namespace BleConnector.Ble {
         /// <returns></returns>
         public static async Task<bool> Subscribe(string char_uuid, TypedEventHandler<GattCharacteristic, GattValueChangedEventArgs> listener) {
             if (!CheckConnection()) {
-                Console.WriteLine("Device not connected");
+                // Device not connected
+                Logger.Error(ErrorCodes.DeviceNotConnected);
                 return false;
             }
 
@@ -46,7 +48,8 @@ namespace BleConnector.Ble {
             }
 
             if (!gc.CharacteristicProperties.HasFlag(GattCharacteristicProperties.Indicate) && !gc.CharacteristicProperties.HasFlag(GattCharacteristicProperties.Notify)) {
-                Console.WriteLine("This characteristic does not support notify/indicate operation.");
+                // This characteristic does not support notify/indicate operation.
+                Logger.Error(ErrorCodes.SubscribeNotSupported);
                 return false;
             }
 
@@ -59,7 +62,7 @@ namespace BleConnector.Ble {
                             GattClientCharacteristicConfigurationDescriptorValue.Notify);
             }
 
-            Console.WriteLine(status.ToString()); // TODO: Remove
+            Logger.Log(status.ToString());
 
             if (status == GattCommunicationStatus.Success) {
                 gc.ValueChanged += listener;
@@ -77,7 +80,8 @@ namespace BleConnector.Ble {
         /// <returns></returns>
         public static bool Unsubscribe(string char_uuid, TypedEventHandler<GattCharacteristic, GattValueChangedEventArgs> listener) {
             if (!CheckConnection()) {
-                Console.WriteLine("Device not connected");
+                // Device not connected
+                Logger.Error(ErrorCodes.DeviceNotConnected);
                 return false;
             }
 
@@ -87,13 +91,14 @@ namespace BleConnector.Ble {
             }
 
             if (!gc.CharacteristicProperties.HasFlag(GattCharacteristicProperties.Indicate) && !gc.CharacteristicProperties.HasFlag(GattCharacteristicProperties.Notify)) {
-                Console.WriteLine("This characteristic does not support indicate/notify operation.");
+                // This characteristic does not support indicate/notify operation
+                Logger.Error(ErrorCodes.SubscribeNotSupported);
                 return false;
             }
 
             gc.ValueChanged -= listener;
 
-            Console.WriteLine("Unsubscribe successful");
+            Logger.Log("Unsubscribe successful");
             return true;
         }
 
@@ -102,17 +107,22 @@ namespace BleConnector.Ble {
         /// </summary>
         /// <param name="commands"></param>
         public static async Task<bool> WriteData(string char_uuid, byte[] write_data) {
-            if (!CheckConnection()) { Console.WriteLine("Device not connected"); return false; }
+            if (!CheckConnection()) {
+                // Device not connected
+                Logger.Error(ErrorCodes.DeviceNotConnected);
+                return false;
+            }
 
             GattCharacteristic gc = GetCharactristic(char_uuid);
             if (gc == null) { return false; }
             if (!gc.CharacteristicProperties.HasFlag(GattCharacteristicProperties.Write)) {
-                Console.WriteLine("This characteristic does not support write operation.");
+                // This characteristic does not support write operation
+                Logger.Error(ErrorCodes.WriteNotSupported);
                 return false;
             }
 
             GattCommunicationStatus result = await gc.WriteValueAsync(write_data.AsBuffer());
-            Console.WriteLine($"Result: {result}");
+            Logger.Log($"Result: {result}");
 
             if (result == GattCommunicationStatus.Success)
                 return true;
@@ -126,12 +136,17 @@ namespace BleConnector.Ble {
         public async static Task<byte[]> ReadData(string char_uuid) {
             byte[] data;
 
-            if (!CheckConnection()) { Console.WriteLine("Device not connected"); return null; }
+            if (!CheckConnection()) {
+                // Device not connected
+                Logger.Error(ErrorCodes.DeviceNotConnected);
+                return null;
+            }
 
             GattCharacteristic gc = GetCharactristic(char_uuid);
             if (gc == null) { return null; }
             if (!gc.CharacteristicProperties.HasFlag(GattCharacteristicProperties.Read)) {
-                Console.WriteLine("This characteristic does not support read operation.");
+                // This characteristic does not support read operation;
+                Logger.Error(ErrorCodes.ReadNotSupported);
                 return null;
             }
 
@@ -164,7 +179,8 @@ namespace BleConnector.Ble {
                     return characteristic;
                 }
             }
-            Console.WriteLine("Invalid characteristic uuid.");
+            // Invalid characteristic uuid (not gonna happen because its all tested)
+            Logger.Error(ErrorCodes.InvalidCharacteristic);
             return null;
         }
 

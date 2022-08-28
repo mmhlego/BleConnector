@@ -5,7 +5,7 @@ namespace BleConnector.Models {
     /// This class represents the defined results model provided by 'Beurer FT95 Thermometer' device documentation
     /// </summary>
     /// <example>
-    ///Console.WriteLine(JsonSerializer.Serialize(ThermometerMeasurement.ParseBytes(new byte[] { 7, 16, 3, 0, 255, 225, 7, 4, 13, 14, 7, 0, 255 })));
+    /// JsonSerializer.Serialize(ThermometerMeasurement.ParseBytes(new byte[] { 7, 16, 3, 0, 255, 225, 7, 4, 13, 14, 7, 0, 255 }))
     /// </example>
     class ThermometerMeasurement {
         public ThermometerFlags Flags { get; set; }

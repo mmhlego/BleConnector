@@ -5,7 +5,7 @@ namespace BleConnector.Models {
     /// This class represents the defined results model provided by 'Beurer Gl50 evo' device documentation
     /// </summary>
     /// <example>
-    ///Console.WriteLine(JsonSerializer.Serialize(GlucoseMeasurement.ParseBytes(new byte[] { 22, 9, 0, 230, 7, 8, 5, 10, 10, 0, 55, 192, 17 })));
+    /// JsonSerializer.Serialize(GlucoseMeasurement.ParseBytes(new byte[] { 22, 9, 0, 230, 7, 8, 5, 10, 10, 0, 55, 192, 17 }))
     /// </example>
     class GlucometerMeasurement {
         public byte Flags { get; set; }

@@ -77,7 +77,7 @@ namespace BleConnector.Ble {
 
         ///================================================================================================================= Oximeter Section
 
-        static string OximeterWriteCharacteristic = "0000ff01-0000-1000-8000-00805f9b34fb";
+        static readonly string OximeterWriteCharacteristic = "0000ff01-0000-1000-8000-00805f9b34fb";
         static byte[] AllOximeterData;
 
         /// <summary>

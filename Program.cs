@@ -26,19 +26,22 @@ namespace BleConnector {
 
                 // Check if the command is valid
                 if (commands.Length != 2) {
-                    Console.WriteLine("Invalid command format. Format: <Device_Type> <Mac_Address>");
+                    // Invalid command format. Format: <Device_Type> <Mac_Address>
+                    Logger.Error(ErrorCodes.InvalidCommand);
                     continue;
                 }
 
                 // Check if device type is valid
                 if (!Enum.TryParse(commands[0], out DeviceTypes deviceType)) {
-                    Console.WriteLine($"Invalid device type. Valid device types: {Enum.GetValues(typeof(DeviceTypes))}");
+                    //Invalid device type. Valid device types: {Enum.GetValues(typeof(DeviceTypes)}
+                    Logger.Error(ErrorCodes.InvalidDeviceType);
                     continue;
                 }
 
                 // Check if mac address is valid
                 if (!Regex.IsMatch(commands[1], "(.{2})(.{2})(.{2})(.{2})(.{2})(.{2})")) {
-                    Console.WriteLine("Invalid mac address format. Correct format: XX:XX:XX:XX:XX:XX");
+                    // Invalid mac address format. Correct format: XX:XX:XX:XX:XX:XX"
+                    Logger.Error(ErrorCodes.InvalidMacAddress);
                     continue;
                 }
 
@@ -46,13 +49,13 @@ namespace BleConnector {
                 Core.Scan(commands[1]);
 
                 if (Interface.ConnectedDevice == null) {
-                    Console.WriteLine("Device not found.");
+                    Logger.Error(ErrorCodes.DeviceNotFound);
                     continue;
                 }
 
                 // Check if connected
                 if (Interface.ConnectedDevice.DeviceInformation.Pairing.CanPair && !Interface.ConnectedDevice.DeviceInformation.Pairing.IsPaired) {
-                    Console.WriteLine("Pairing required.");
+                    Logger.Error(ErrorCodes.PairingRequired);
                     continue;
                 }
 
