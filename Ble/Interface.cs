@@ -45,13 +45,19 @@ namespace BleConnector.Ble {
                 return false;
             }
 
-            if (!gc.CharacteristicProperties.HasFlag(GattCharacteristicProperties.Indicate)) {
-                Console.WriteLine("This characteristic does not support notify/Indicate operation.");
+            if (!gc.CharacteristicProperties.HasFlag(GattCharacteristicProperties.Indicate) && !gc.CharacteristicProperties.HasFlag(GattCharacteristicProperties.Notify)) {
+                Console.WriteLine("This characteristic does not support notify/indicate operation.");
                 return false;
             }
 
-            GattCommunicationStatus status = await gc.WriteClientCharacteristicConfigurationDescriptorAsync(
-                        GattClientCharacteristicConfigurationDescriptorValue.Indicate);
+            GattCommunicationStatus status;
+            if (gc.CharacteristicProperties.HasFlag(GattCharacteristicProperties.Indicate)) {
+                status = await gc.WriteClientCharacteristicConfigurationDescriptorAsync(
+                            GattClientCharacteristicConfigurationDescriptorValue.Indicate);
+            } else {
+                status = await gc.WriteClientCharacteristicConfigurationDescriptorAsync(
+                            GattClientCharacteristicConfigurationDescriptorValue.Notify);
+            }
 
             Console.WriteLine(status.ToString()); // TODO: Remove
 
@@ -80,8 +86,8 @@ namespace BleConnector.Ble {
                 return false;
             }
 
-            if (!gc.CharacteristicProperties.HasFlag(GattCharacteristicProperties.Indicate)) {
-                Console.WriteLine("This characteristic does not support indicate operation.");
+            if (!gc.CharacteristicProperties.HasFlag(GattCharacteristicProperties.Indicate) && !gc.CharacteristicProperties.HasFlag(GattCharacteristicProperties.Notify)) {
+                Console.WriteLine("This characteristic does not support indicate/notify operation.");
                 return false;
             }
 
