@@ -3,15 +3,15 @@ using System;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Windows.Devices.Bluetooth.GenericAttributeProfile;
-using Windows.Foundation;
 using Windows.Security.Cryptography;
+using System.Linq;
 
 namespace BleConnector.Ble {
     static class Manager {
         public static async Task<bool> Communicate(DeviceTypes deviceType) {
             switch (deviceType) {
-                //case DeviceTypes.Oximeter:
-                //return CommunicateWithOximeter();
+                case DeviceTypes.Oximeter:
+                    return await CommunicateWithOximeter();
                 case DeviceTypes.Glucometer:
                     return await CommunicateWithGlucometer();
                 case DeviceTypes.Thermometer:
@@ -77,8 +77,58 @@ namespace BleConnector.Ble {
 
         ///================================================================================================================= Oximeter Section
 
-        private static bool CommunicateWithOximeter() {
-            throw new NotImplementedException();
+        static string OximeterWriteCharacteristic = "0000ff01-0000-1000-8000-00805f9b34fb";
+        static byte[] AllOximeterData;
+
+        /// <summary>
+        /// Set of instructions to get oximeter measurements
+        /// </summary>
+        /// <example> Command: Oximeter ff:8d:d6:ea:3c:00 </example>
+        private static async Task<bool> CommunicateWithOximeter() {
+            string MeasurementCharacteristic = "0000ff02-0000-1000-8000-00805f9b34fb";
+            AllOximeterData = new byte[0];
+
+            await Interface.Subscribe(MeasurementCharacteristic, OximeterListener);
+            await Interface.WriteData(OximeterWriteCharacteristic, new byte[] { 0x99, 0x00, 0x19 });
+
+            await Task.Delay(5 * 1000);
+
+            Interface.Unsubscribe(MeasurementCharacteristic, OximeterListener);
+
+            OximeterMeasurement latest = null;
+
+            // Split all data to chunks of size 24 byte and parse them to valid measurements
+            int DataCount = AllOximeterData.Length / 24;
+            for (int i = 0; i < DataCount; i++) {
+                byte[] data = new byte[24];
+                Array.Copy(AllOximeterData, i * 24, data, 0, 24);
+                OximeterMeasurement measurement = OximeterMeasurement.ParseBytes(data);
+
+                // Only store the latest measurement by time
+                if (latest == null) {
+                    latest = measurement;
+                } else if (latest.Start.CompareTo(measurement.Start) < 0) {
+                    latest = measurement;
+                }
+            }
+
+            Console.WriteLine(JsonSerializer.Serialize(latest));
+
+            return true;
+        }
+
+        /// <summary>
+        ///  Oximeter specific listener that gets data and stores it, then writes a response on the peripheral
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="args"></param>
+        static async void OximeterListener(GattCharacteristic sender, GattValueChangedEventArgs args) {
+            CryptographicBuffer.CopyToByteArray(args.CharacteristicValue, out byte[] data);
+            AllOximeterData = AllOximeterData.Concat(data).ToArray();
+
+            if (AllOximeterData.Length % 240 == 0) {
+                await Interface.WriteData(OximeterWriteCharacteristic, new byte[] { 0x99, 0x01, 0x1a });
+            }
         }
     }
 }
