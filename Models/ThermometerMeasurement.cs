@@ -27,7 +27,7 @@ namespace BleConnector.Models {
             return new ThermometerMeasurement {
                 Flags = new ThermometerFlags {
                     Unit = ((data[0] & 0x80) != 0) ? "Celsius" : "Fahrenheit",
-                    TimeStampFlag = (data[0] & 0x40) == 0,
+                    TimestampFlag = (data[0] & 0x40) == 0,
                     TypeFlag = (data[0] & 0x20) == 0,
                     HasFever = (data[0] & 0x01) == 0,
                 },
@@ -47,7 +47,7 @@ namespace BleConnector.Models {
 
     class ThermometerFlags {
         public string Unit { get; set; }
-        public bool TimeStampFlag { get; set; }
+        public bool TimestampFlag { get; set; }
         public bool TypeFlag { get; set; }
         public bool HasFever { get; set; }
     }
