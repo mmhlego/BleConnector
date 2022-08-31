@@ -10,12 +10,14 @@ namespace BleConnector.Ble {
     static class Manager {
         public static async Task<bool> Communicate(DeviceTypes deviceType) {
             switch (deviceType) {
-                case DeviceTypes.Oximeter:
-                    return await CommunicateWithOximeter();
                 case DeviceTypes.Glucometer:
                     return await CommunicateWithGlucometer();
+                case DeviceTypes.Oximeter:
+                    return await CommunicateWithOximeter();
                 case DeviceTypes.Thermometer:
                     return await CommunicateWithThermometer();
+                case DeviceTypes.BloodPressure:
+                    return await CommunicateWithBloodPressure();
             }
             return false;
         }
@@ -118,7 +120,7 @@ namespace BleConnector.Ble {
         }
 
         /// <summary>
-        ///  Oximeter specific listener that gets data and stores it, then writes a response on the peripheral
+        /// Oximeter specific listener that gets data and stores it, then writes a response on the peripheral
         /// </summary>
         /// <param name="sender"></param>
         /// <param name="args"></param>
@@ -128,6 +130,48 @@ namespace BleConnector.Ble {
 
             if (AllOximeterData.Length % 240 == 0) {
                 await Interface.WriteData(OximeterWriteCharacteristic, new byte[] { 0x99, 0x01, 0x1a });
+            }
+        }
+
+        ///================================================================================================================= Oximeter Section
+
+
+        static BloodPressureMeasurement latestBloodPressureMeasurement = null;
+
+        /// <summary>
+        /// Set of instructions to get blood pressure measurements
+        /// </summary>
+        /// <example> Command: BloodPressure fc:d2:b6:56:15:5d </example>
+        static async Task<bool> CommunicateWithBloodPressure() {
+            string MeasurementCharacteristic = "00002a35-0000-1000-8000-00805f9b34fb";
+            latestBloodPressureMeasurement = null;
+
+            await Interface.Subscribe(MeasurementCharacteristic, BloodPressureListener);
+
+            await Task.Delay(5 * 1000);
+
+            Interface.Unsubscribe(MeasurementCharacteristic, BloodPressureListener);
+
+            Console.WriteLine(JsonSerializer.Serialize(latestBloodPressureMeasurement));
+
+            return true;
+        }
+
+        /// <summary>
+        /// Blood pressure specific listener that gets data and stores it, then writes a response on the peripheral
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="args"></param>
+        static void BloodPressureListener(GattCharacteristic sender, GattValueChangedEventArgs args) {
+            CryptographicBuffer.CopyToByteArray(args.CharacteristicValue, out byte[] data);
+            BloodPressureMeasurement newest = BloodPressureMeasurement.ParseBytes(data);
+
+            // Only store the latest measurement by time
+            if (latestBloodPressureMeasurement == null) {
+                latestBloodPressureMeasurement = newest;
+                return;
+            } else if (latestBloodPressureMeasurement.Timestamp.CompareTo(newest.Timestamp) < 0) {
+                latestBloodPressureMeasurement = newest;
             }
         }
     }

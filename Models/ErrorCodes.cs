@@ -13,11 +13,11 @@ namespace BleConnector.Models {
         }
 
         public static void Error(ErrorCodes error) {
-            Console.Write(error.ToString());
+            Console.WriteLine(error.ToString());
         }
 
         public static void Error(BluetoothError error) {
-            Console.Write(error.ToString());
+            Console.WriteLine(error.ToString());
         }
     }
 
