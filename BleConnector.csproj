@@ -119,6 +119,7 @@
     <Compile Include="Ble\Core.cs" />
     <Compile Include="Ble\Interface.cs" />
     <Compile Include="Ble\Manager.cs" />
+    <Compile Include="Models\BloodPressureMeasurement.cs" />
     <Compile Include="Models\DeviceTypes.cs" />
     <Compile Include="Models\ErrorCodes.cs" />
     <Compile Include="Models\GlucometerMeasurement.cs" />
