@@ -3,6 +3,7 @@ using System;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using BleConnector.Ble;
+using System.Text.Json;
 
 /// <summary>
 /// Program entry point
@@ -53,8 +54,9 @@ namespace BleConnector {
                     continue;
                 }
 
-                // Check if connected
-                if (Interface.ConnectedDevice.DeviceInformation.Pairing.CanPair && !Interface.ConnectedDevice.DeviceInformation.Pairing.IsPaired) {
+                // Check if connected (except weight scale)
+                if (Interface.ConnectedDevice.DeviceInformation.Pairing.CanPair && !Interface.ConnectedDevice.DeviceInformation.Pairing.IsPaired
+                    && deviceType != DeviceTypes.WeightScale) {
                     Logger.Error(ErrorCodes.PairingRequired);
                     continue;
                 }
