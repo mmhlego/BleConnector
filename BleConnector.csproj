@@ -127,6 +127,7 @@
     <Compile Include="Models\Range.cs" />
     <Compile Include="Models\ThermometerMeasurement.cs" />
     <Compile Include="Models\Timestamp.cs" />
+    <Compile Include="Models\WeightMeasurement.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

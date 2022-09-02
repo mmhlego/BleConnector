@@ -4,5 +4,6 @@
         Oximeter,
         Thermometer,
         BloodPressure,
+        WeightScale,
     }
 }

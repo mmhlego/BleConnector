@@ -18,6 +18,8 @@ namespace BleConnector.Ble {
                     return await CommunicateWithThermometer();
                 case DeviceTypes.BloodPressure:
                     return await CommunicateWithBloodPressure();
+                case DeviceTypes.WeightScale:
+                    return await CommunicateWithWeightScale();
             }
             return false;
         }
@@ -133,8 +135,7 @@ namespace BleConnector.Ble {
             }
         }
 
-        ///================================================================================================================= Oximeter Section
-
+        ///================================================================================================================= Blood Pressure Section
 
         static BloodPressureMeasurement latestBloodPressureMeasurement = null;
 
@@ -172,6 +173,45 @@ namespace BleConnector.Ble {
                 return;
             } else if (latestBloodPressureMeasurement.Timestamp.CompareTo(newest.Timestamp) < 0) {
                 latestBloodPressureMeasurement = newest;
+            }
+        }
+
+        ///================================================================================================================= Weight Scale Section
+
+        static TaskCompletionSource<bool> WeightScaleTask;
+        static WeightMeasurement latestWeightMeasurement;
+        static readonly string WeightScaleMeasurementCharacteristic = "0000ffe1-0000-1000-8000-00805f9b34fb";
+
+        /// <summary>
+        /// Set of instructions to get weight scale measurements
+        /// </summary>
+        /// <example> Command: WeightScale 34:14:b5:a0:1d:03 </example>
+        static async Task<bool> CommunicateWithWeightScale() {
+            latestWeightMeasurement = null;
+            WeightScaleTask = new TaskCompletionSource<bool>();
+
+            await Interface.Subscribe(WeightScaleMeasurementCharacteristic, WeightScaleListener);
+
+            return await WeightScaleTask.Task;
+        }
+
+        /// <summary>
+        /// Weight scale specific listener that gets data and stores it, then prints the result when measurement is finished
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="args"></param>
+        static void WeightScaleListener(GattCharacteristic sender, GattValueChangedEventArgs args) {
+            CryptographicBuffer.CopyToByteArray(args.CharacteristicValue, out byte[] data);
+
+            Console.WriteLine(String.Join(", ", data));
+
+            if (data.Length == 5) {
+                latestWeightMeasurement = WeightMeasurement.ParseBytes(data);
+                Console.WriteLine("Update: " + JsonSerializer.Serialize(latestWeightMeasurement));
+            } else {
+                Console.WriteLine("Final: " + JsonSerializer.Serialize(latestWeightMeasurement));
+                Interface.Unsubscribe(WeightScaleMeasurementCharacteristic, WeightScaleListener);
+                WeightScaleTask.SetResult(true);
             }
         }
     }
