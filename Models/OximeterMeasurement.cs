@@ -1,4 +1,6 @@
-﻿namespace BleConnector.Models {
+﻿using System.Text.Json.Serialization;
+
+namespace BleConnector.Models {
     /// <summary>
     /// This class represents the defined results model provided by 'Beurer PO60 Glucometer' device documentation
     /// </summary>
@@ -6,6 +8,7 @@
     /// JsonSerializer.Serialize(OximeterMeasurement.ParseBytes(new byte[] { 0xE9, 0x00, 0x0F, 0x0B, 0x06, 0x0D, 0x14, 0x25, 0x0F, 0x0B, 0x06, 0x0D, 0x14, 0x3A, 0x00, 0x00, 0x16, 0x60, 0x60, 0x60, 0x6F, 0x6E, 0x6E, 0x4B }))
     /// </example>
     class OximeterMeasurement {
+        [JsonIgnore]
         public byte Header { get; set; }
         public int Packetnumber { get; set; }
         public Timestamp Start { get; set; }
