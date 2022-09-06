@@ -1,0 +1,5 @@
+Thermometer ff:00:00:00:06:01
+Glucometer f7:4c:87:32:62:ff
+Oximeter ff:8d:d6:ea:3c:00
+BloodPressure fc:d2:b6:56:15:5d
+WeightScale 34:14:b5:a0:1d:03
