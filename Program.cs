@@ -44,6 +44,16 @@ if (!Regex.IsMatch(commands[1], "(.{2})(.{2})(.{2})(.{2})(.{2})(.{2})")) {
 //await GenerateRandomData(deviceType);
 //return;
 
+if (!await Core.CheckBleSupport()) {
+    Logger.Error(ErrorCodes.NotSupported);
+    return;
+}
+
+if (!await Core.CheckBleEnabled()) {
+    Logger.Error(ErrorCodes.DisabledByUser);
+    return;
+}
+
 // Scan and connect to device
 Core.Scan(commands[1]);
 

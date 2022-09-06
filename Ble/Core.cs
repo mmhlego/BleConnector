@@ -1,9 +1,8 @@
 ﻿using BleConnector.Models;
-using System;
 using System.Text.RegularExpressions;
-using System.Threading;
 using Windows.Devices.Bluetooth;
 using Windows.Devices.Bluetooth.Advertisement;
+using Windows.Devices.Radios;
 
 namespace BleConnector.Ble {
     static class Core {
@@ -12,6 +11,17 @@ namespace BleConnector.Ble {
         };
 
         static string TargetMacAddress = "";
+
+        public static async Task<bool> CheckBleSupport() {
+            var radios = await Radio.GetRadiosAsync();
+            return radios.FirstOrDefault(radio => radio.Kind == RadioKind.Bluetooth) != null;
+        }
+
+        public static async Task<bool> CheckBleEnabled() {
+            var radios = await Radio.GetRadiosAsync();
+            var bluetoothRadio = radios.FirstOrDefault(radio => radio.Kind == RadioKind.Bluetooth);
+            return bluetoothRadio != null && bluetoothRadio.State == RadioState.On;
+        }
 
         // Scans the environment for device with given mac address
         public static void Scan(string macAddress) {
