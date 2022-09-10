@@ -9,6 +9,11 @@
 
 	<ItemGroup>
 		<Folder Include="Ble\" />
-		<Folder Include="Models\" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Reference Include="mintti_sdk">
+	    <HintPath>bin\Debug\net6.0-windows10.0.17763.0\mintti_sdk.dll</HintPath>
+	  </Reference>
 	</ItemGroup>
 </Project>
