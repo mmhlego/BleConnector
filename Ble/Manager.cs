@@ -1,10 +1,9 @@
 ﻿using BleConnector.Models;
-using System;
 using System.Text.Json;
-using System.Threading.Tasks;
 using Windows.Devices.Bluetooth.GenericAttributeProfile;
 using Windows.Security.Cryptography;
-using System.Linq;
+using BleConnector.Utils;
+using mintti_sdk.ble;
 
 namespace BleConnector.Ble {
     static class Manager {
@@ -20,6 +19,8 @@ namespace BleConnector.Ble {
                     return await CommunicateWithBloodPressure();
                 case DeviceTypes.WeightScale:
                     return await CommunicateWithWeightScale();
+                case DeviceTypes.Stethoscope:
+                    return await CommunicateWithStethoscope();
             }
             return false;
         }
@@ -212,6 +213,177 @@ namespace BleConnector.Ble {
                 //Console.WriteLine("Final: " + JsonSerializer.Serialize(latestWeightMeasurement));
                 Interface.Unsubscribe(WeightScaleMeasurementCharacteristic, WeightScaleListener);
                 WeightScaleTask.SetResult(true);
+            }
+        }
+
+        ///================================================================================================================= Stethoscope Section
+
+        static readonly int audioLengthSeconds = 5;
+        static FileStream outputAudio = null;
+
+        /// <summary>
+        /// Set of instructions to get weight scale measurements
+        /// </summary>
+        /// <example> Command: Stethoscope fb:dc:1e:37:47:bc </example>
+        static async Task<bool> CommunicateWithStethoscope() {
+            string MeasurementCharacteristic = "00000003-0000-1000-8000-00805f9b34fb";
+            string ModeCharacteristic = "00000008-0000-1000-8000-00805f9b34fb";
+            mPrevSerial = -2;
+            InitAlgo();
+
+            CreateOutputAudioFile();
+
+            await Interface.Subscribe(ModeCharacteristic, StethoscopeModeListener);
+            await Interface.Subscribe(MeasurementCharacteristic, StethoscopeListener);
+
+            await Task.Delay((audioLengthSeconds + 5) * 1000);
+
+            Interface.Unsubscribe(ModeCharacteristic, StethoscopeModeListener);
+            Interface.Unsubscribe(MeasurementCharacteristic, StethoscopeListener);
+
+            StethoscopeMeasurement result = new StethoscopeMeasurement {
+                FileName = outputAudio.Name
+            };
+
+            Console.WriteLine(JsonSerializer.Serialize(result));
+
+            return true;
+        }
+
+        /// <summary>
+        /// This function creates the output file to dump the decoded audio data into it.
+        /// </summary>
+        static void CreateOutputAudioFile() {
+            //outputAudio = File.Open($"./{DateTime.UtcNow.ToString("yyyy-MM-dd HH-mm-ss")}.mp3", FileMode.OpenOrCreate);
+            File.Delete("./output.mp3");
+            outputAudio = File.Open($"./output.mp3", FileMode.OpenOrCreate);
+            outputAudio.SetLength(0);
+
+            /// Standard header data
+            var data = new byte[] {
+                0x52, 0x49, 0x46, 0x46, // RIFF
+                0x2C, 0x53, 0x07, 0x00, // file size
+
+                0x57, 0x41, 0x56, 0x45, // WAVE
+                0x66, 0x6d, 0x74, 0x20, // fmt
+                0x10, 0x00, 0x00, 0x00, // subchunk 1 size
+
+                0x01, 0x00, // audio format
+                0x01, 0x00, // channels
+                0x40, 0x1F, 0x00, 0x00, // sample rate
+                0x80, 0x3E, 0x00, 0x00, // byte rate
+                0x02, 0x00, // block align
+                0x10, 0x00, // bits per sample
+
+                0x64, 0x61, 0x74, 0x61, // data
+                0x00, 0x53, 0x07, 0x00, // subchunk 2 size
+            };
+
+            foreach (byte c in data) {
+                outputAudio.WriteByte(c);
+            }
+        }
+
+        /// <summary>
+        /// This function initializes the data processors inside .dll files
+        /// </summary>
+        private static void InitAlgo() {
+            SmarthoAlgo.aes_process_init();
+            SmarthoAlgo.smarthoAlgo_aec_process_init();
+            SmarthoAlgo.smarthoAlgo_init_agcProcess();
+            SmarthoAlgo.smarthoAlgo_init_clip_distortion();
+            SmarthoAlgo.init_noise_suppression();
+            Logger.Log("initAlgo");
+        }
+
+        /// <summary>
+        /// These data are needed to decode the audio data
+        /// </summary>
+        private static int mPrevSerial = -2;
+        private static byte[] micAudioArr = null;
+        private static byte[] spkAudioArr = null;
+        private static short[] decodeSpkArr = null;
+        private static short[] decodeMicArr = null;
+        private static short[] aecOut = null;
+        private static short[] gainResultData = null;
+        private static EchoMode curEchoMode = EchoMode.MODE_BELL_ECHO;
+
+        /// <summary>
+        /// Stethoscope mode listener to update the device mode (BELL or DIAFRAGM) inside the cli
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="args"></param>
+        static void StethoscopeModeListener(GattCharacteristic sender, GattValueChangedEventArgs args) {
+            CryptographicBuffer.CopyToByteArray(args.CharacteristicValue, out byte[] data);
+            if (data[0] == 0) {
+                curEchoMode = EchoMode.MODE_BELL_ECHO;
+            } else if (data[0] == 1) {
+                curEchoMode = EchoMode.MODE_DIAPHRAGM_ECHO;
+            }
+            Logger.Log($"Echo Mode: {curEchoMode}");
+        }
+
+        /// <summary>
+        /// Stethoscope specific data listener that receives the raw encoded data and decodes it to meaningful audio data.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="args"></param>
+        static void StethoscopeListener(GattCharacteristic sender, GattValueChangedEventArgs args) {
+            CryptographicBuffer.CopyToByteArray(args.CharacteristicValue, out byte[] data);
+
+            if (data.Length == 158) {
+                int num = data[2] & 0xFF;
+                if (mPrevSerial != -2 && mPrevSerial + 1 != num) {
+                    Logger.Log("data lost");
+                }
+
+                if (num == 255) {
+                    mPrevSerial = -1;
+                } else {
+                    mPrevSerial = num;
+                }
+
+                spkAudioArr = new byte[30];
+                micAudioArr = new byte[120];
+                Array.Copy(data, 8, spkAudioArr, 0, spkAudioArr.Length);
+                Array.Copy(data, 38, micAudioArr, 0, micAudioArr.Length);
+                decodeSpkArr = DecodeAudioDataUtils.GetInstance.DecodeSpkData(spkAudioArr);
+                decodeMicArr = DataUtil.byteArray2ShortArray(micAudioArr);
+
+            } else if (data.Length == 150) {
+                spkAudioArr = new byte[30];
+                micAudioArr = new byte[120];
+                Array.Copy(data, 0, spkAudioArr, 0, spkAudioArr.Length);
+                Array.Copy(data, 30, micAudioArr, 0, micAudioArr.Length);
+                decodeSpkArr = DecodeAudioDataUtils.GetInstance.DecodeSpkData(spkAudioArr);
+                decodeMicArr = DataUtil.byteArray2ShortArray2(micAudioArr);
+
+            } else if (data.Length == 180) {
+                micAudioArr = new byte[90];
+                spkAudioArr = new byte[90];
+                Array.Copy(data, 0, micAudioArr, 0, micAudioArr.Length);
+                Array.Copy(data, 90, spkAudioArr, 0, spkAudioArr.Length);
+                decodeSpkArr = DecodeAudioDataUtils.GetInstance.DecodeSpkData(spkAudioArr);
+                decodeMicArr = DecodeAudioDataUtils.GetInstance.DecodeMicData(micAudioArr);
+            }
+
+            if (decodeMicArr == null || decodeSpkArr == null) {
+                return;
+            }
+
+            aecOut = HandleRawData.GetInstance.aecProcessData(decodeMicArr, decodeSpkArr);
+            if (aecOut != null) {
+                gainResultData = HandleRawData.GetInstance.clipDistortionAndAutoGain(aecOut, curEchoMode);
+                if (gainResultData != null) {
+                    //handleHeartRate.handleHeartRate(gainResultData);
+                    SmarthoAlgo.noise_suppression_process(gainResultData, gainResultData.Length);
+
+                    /// Append the decoded data to the end of the audio file
+                    for (int i = 0; i < gainResultData.Length; i++) {
+                        outputAudio.WriteByte(DataUtil.Short2Bytes(gainResultData[i])[0]);
+                        outputAudio.WriteByte(DataUtil.Short2Bytes(gainResultData[i])[1]);
+                    }
+                }
             }
         }
     }

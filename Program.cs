@@ -64,7 +64,7 @@ if (Interface.ConnectedDevice == null) {
 
 // Check if connected (except weight scale)
 if (Interface.ConnectedDevice.DeviceInformation.Pairing.CanPair && !Interface.ConnectedDevice.DeviceInformation.Pairing.IsPaired
-    && deviceType != DeviceTypes.WeightScale) {
+    && deviceType != DeviceTypes.WeightScale && deviceType != DeviceTypes.Stethoscope) {
     Logger.Error(ErrorCodes.PairingRequired);
     return;
 }
