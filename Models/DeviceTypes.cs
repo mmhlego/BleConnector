@@ -5,5 +5,6 @@
         Thermometer,
         BloodPressure,
         WeightScale,
+        Stethoscope,
     }
 }

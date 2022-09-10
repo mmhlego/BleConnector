@@ -2,7 +2,7 @@
   "profiles": {
     "BleConnector": {
       "commandName": "Project",
-      "commandLineArgs": "BloodPressure fc:d2:b6:56:15:5d"
+      "commandLineArgs": "Stethoscope fb:dc:1e:37:47:bc"
     }
   }
 }
