@@ -3,11 +3,8 @@ using Windows.Devices.Bluetooth;
 
 namespace BleConnector.Models {
     static class Logger {
-        // When exporting, by changing this value to false all other logs will be invisible
-        static readonly bool IsDev = false;
-
         public static void Log(string message) {
-            if (IsDev) {
+            if (Settings.Debug) {
                 Console.WriteLine(message);
             }
         }

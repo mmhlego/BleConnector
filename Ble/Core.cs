@@ -30,7 +30,7 @@ namespace BleConnector.Ble {
             StartWatcher();
 
             // Stop watcher after 10 seconds
-            Thread.Sleep(10000);
+            Thread.Sleep(Settings.ScanTimeout * 1000);
             BleWatcher.Stopped -= OnScanError;
             BleWatcher.Stop();
             BleWatcher.Received -= OnScanResults;

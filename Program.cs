@@ -17,6 +17,8 @@ using System.Threading;
 //    return;
 //}
 
+Settings.loadSettings();
+
 string[] commands = Environment.GetCommandLineArgs().Skip(1).ToArray();
 
 // Check if the command is valid

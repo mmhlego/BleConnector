@@ -207,10 +207,11 @@ namespace BleConnector.Ble {
 
             if (data.Length == 5) {
                 latestWeightMeasurement = WeightMeasurement.ParseBytes(data);
-                //Console.WriteLine("Update: " + JsonSerializer.Serialize(latestWeightMeasurement));
+                if (Settings.UpdateWeight) {
+                    Console.WriteLine("Update: " + JsonSerializer.Serialize(latestWeightMeasurement));
+                }
             } else {
                 Console.WriteLine(JsonSerializer.Serialize(latestWeightMeasurement));
-                //Console.WriteLine("Final: " + JsonSerializer.Serialize(latestWeightMeasurement));
                 Interface.Unsubscribe(WeightScaleMeasurementCharacteristic, WeightScaleListener);
                 WeightScaleTask.SetResult(true);
             }
@@ -218,7 +219,6 @@ namespace BleConnector.Ble {
 
         ///================================================================================================================= Stethoscope Section
 
-        static readonly int audioLengthSeconds = 5;
         static FileStream outputAudio = null;
 
         /// <summary>
@@ -236,7 +236,7 @@ namespace BleConnector.Ble {
             await Interface.Subscribe(ModeCharacteristic, StethoscopeModeListener);
             await Interface.Subscribe(MeasurementCharacteristic, StethoscopeListener);
 
-            await Task.Delay((audioLengthSeconds + 5) * 1000);
+            await Task.Delay((Settings.AudioLength + 5) * 1000);
 
             Interface.Unsubscribe(ModeCharacteristic, StethoscopeModeListener);
             Interface.Unsubscribe(MeasurementCharacteristic, StethoscopeListener);
@@ -254,9 +254,9 @@ namespace BleConnector.Ble {
         /// This function creates the output file to dump the decoded audio data into it.
         /// </summary>
         static void CreateOutputAudioFile() {
-            //outputAudio = File.Open($"./{DateTime.UtcNow.ToString("yyyy-MM-dd HH-mm-ss")}.mp3", FileMode.OpenOrCreate);
-            File.Delete("./output.mp3");
-            outputAudio = File.Open($"./output.mp3", FileMode.OpenOrCreate);
+            string fileName = $"./{DateTime.UtcNow.ToString("yyyy-MM-dd HH-mm-ss")}.mp3";
+            File.Delete(fileName);
+            outputAudio = File.Open(fileName, FileMode.OpenOrCreate);
             outputAudio.SetLength(0);
 
             /// Standard header data
