@@ -38,7 +38,7 @@ namespace BleConnector.Ble {
         /// <example> Command: Thermometer ff:00:00:00:06:01 </example>
         private static async Task<bool> CommunicateWithThermometer() {
             string MeasurementCharacteristic = "00002a1c-0000-1000-8000-00805f9b34fb";
-            await Interface.Subscribe(MeasurementCharacteristic, ThermometerListener);
+            if (!await Interface.Subscribe(MeasurementCharacteristic, ThermometerListener)) { return false; }
 
             await Task.Delay(10 * 1000);
 
@@ -63,15 +63,15 @@ namespace BleConnector.Ble {
             string AccessControlCharacteristic = "00002a52-0000-1000-8000-00805f9b34fb";
             string MeasurementCharacteristic = "00002a18-0000-1000-8000-00805f9b34fb";
 
-            await Interface.Subscribe(AccessControlCharacteristic, GlucometerListener);
-            await Interface.Subscribe(MeasurementCharacteristic, GlucometerListener);
+            if (!await Interface.Subscribe(AccessControlCharacteristic, GlucometerListener)) { return false; }
+            if (!await Interface.Subscribe(MeasurementCharacteristic, GlucometerListener)) { return false; }
 
             await Interface.WriteData(AccessControlCharacteristic, new byte[] { 0x01, 0x06 });
 
             await Task.Delay(5 * 1000);
 
-            Interface.Unsubscribe(AccessControlCharacteristic, GlucometerListener);
-            Interface.Unsubscribe(MeasurementCharacteristic, GlucometerListener);
+            //Interface.Unsubscribe(AccessControlCharacteristic, GlucometerListener);
+            //Interface.Unsubscribe(MeasurementCharacteristic, GlucometerListener);
 
             return true;
         }
@@ -94,12 +94,10 @@ namespace BleConnector.Ble {
             string MeasurementCharacteristic = "0000ff02-0000-1000-8000-00805f9b34fb";
             AllOximeterData = new byte[0];
 
-            await Interface.Subscribe(MeasurementCharacteristic, OximeterListener);
-            await Interface.WriteData(OximeterWriteCharacteristic, new byte[] { 0x99, 0x00, 0x19 });
+            if (!await Interface.Subscribe(MeasurementCharacteristic, OximeterListener)) { return false; }
+            if (!await Interface.WriteData(OximeterWriteCharacteristic, new byte[] { 0x99, 0x00, 0x19 })) { return false; }
 
             await Task.Delay(5 * 1000);
-
-            Interface.Unsubscribe(MeasurementCharacteristic, OximeterListener);
 
             OximeterMeasurement latest = null;
 
@@ -119,6 +117,8 @@ namespace BleConnector.Ble {
             }
 
             Console.WriteLine(JsonSerializer.Serialize(latest));
+
+            Interface.Unsubscribe(MeasurementCharacteristic, OximeterListener);
 
             return true;
         }
@@ -149,11 +149,11 @@ namespace BleConnector.Ble {
             string MeasurementCharacteristic = "00002a35-0000-1000-8000-00805f9b34fb";
             latestBloodPressureMeasurement = null;
 
-            await Interface.Subscribe(MeasurementCharacteristic, BloodPressureListener);
+            if (!await Interface.Subscribe(MeasurementCharacteristic, BloodPressureListener)) { return false; }
 
             await Task.Delay(5 * 1000);
 
-            Interface.Unsubscribe(MeasurementCharacteristic, BloodPressureListener);
+            //Interface.Unsubscribe(MeasurementCharacteristic, BloodPressureListener);
 
             Console.WriteLine(JsonSerializer.Serialize(latestBloodPressureMeasurement));
 
@@ -192,7 +192,7 @@ namespace BleConnector.Ble {
             latestWeightMeasurement = null;
             WeightScaleTask = new TaskCompletionSource<bool>();
 
-            await Interface.Subscribe(WeightScaleMeasurementCharacteristic, WeightScaleListener);
+            if (!await Interface.Subscribe(WeightScaleMeasurementCharacteristic, WeightScaleListener)) { return false; }
 
             return await WeightScaleTask.Task;
         }
@@ -233,19 +233,20 @@ namespace BleConnector.Ble {
 
             CreateOutputAudioFile();
 
-            await Interface.Subscribe(ModeCharacteristic, StethoscopeModeListener);
-            await Interface.Subscribe(MeasurementCharacteristic, StethoscopeListener);
+            //if (!await Interface.Subscribe(ModeCharacteristic, StethoscopeModeListener)) { return false; }
+            if (!await Interface.Subscribe(MeasurementCharacteristic, StethoscopeListener)) { return false; }
 
-            await Task.Delay((Settings.AudioLength + 5) * 1000);
+            await Task.Delay((Settings.AudioLength + 2) * 1000);
 
-            Interface.Unsubscribe(ModeCharacteristic, StethoscopeModeListener);
-            Interface.Unsubscribe(MeasurementCharacteristic, StethoscopeListener);
+            //Interface.Unsubscribe(ModeCharacteristic, StethoscopeModeListener);
 
             StethoscopeMeasurement result = new StethoscopeMeasurement {
                 FileName = outputAudio.Name
             };
 
             Console.WriteLine(JsonSerializer.Serialize(result));
+
+            Interface.Unsubscribe(MeasurementCharacteristic, StethoscopeListener);
 
             return true;
         }
