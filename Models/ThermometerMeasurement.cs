@@ -22,14 +22,13 @@ namespace BleConnector.Models {
             if (data.Length != 13) // Length of a valid measurement
                 return null;
 
-
             int temperature = BitConverter.ToInt16(new byte[] { data[1], data[2] }, 0);
             return new ThermometerMeasurement {
                 Flags = new ThermometerFlags {
-                    Unit = ((data[0] & 0x80) == 0) ? "Celsius" : "Fahrenheit",
-                    TimestampFlag = (data[0] & 0x40) == 0,
-                    TypeFlag = (data[0] & 0x20) == 0,
-                    HasFever = (data[0] & 0x01) == 0,
+                    Unit = ((data[0] & 0x01) == 0) ? "Celsius" : "Fahrenheit",
+                    TimestampFlag = (data[0] & 0x02) != 0,
+                    TypeFlag = (data[0] & 0x04) != 0,
+                    HasFever = (data[0] & 0x80) != 0,
                 },
                 Temperature = ((float)temperature) / 10,
                 Timestamp = new Timestamp {
